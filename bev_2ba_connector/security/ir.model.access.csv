@@ -1,2 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-ba_importer.access_ba_importer_wizard,access_ba_importer_wizard,ba_importer.model_ba_importer_wizard,base.group_user,1,1,1,1
+bev_2ba_connector.access_ba_importer_wizard,access_ba_importer_wizard,bev_2ba_connector.model_ba_importer_wizard,base.group_user,1,1,1,1
