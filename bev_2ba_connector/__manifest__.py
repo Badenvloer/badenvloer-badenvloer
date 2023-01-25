@@ -14,7 +14,7 @@
     "depends": ["stock"],
     "application": True,
     "data": [
-        'data/ir_config_parameter.xml'
+        'data/ir_config_parameter.xml',
         'security/ir.model.access.csv',
         'wizard/ba_importer.xml',
     ],
