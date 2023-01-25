@@ -46,11 +46,12 @@ class BaImporterWizard(models.TransientModel):
 
                 product = self.get_product_by_gtin(sku)
                 if 'IsError' in product.keys():
+                    raise UserError("[%s]: %s" % (sku, product.get("ErrorMessage")))
                     continue
 
                 thumbnail = self.get_product_thumbnail(product.get('ManufacturerGLN'), product.get('Productcode'))
 
-                _logger.warning(product)
+                _logger.info(product)
 
                 # add new product
                 self.env["product.template"].create({
@@ -154,3 +155,4 @@ class BaImporterWizard(models.TransientModel):
                          })
 
         return b64encode(r.content).decode("utf-8")
+
