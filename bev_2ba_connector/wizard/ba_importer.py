@@ -89,8 +89,8 @@ class BaImporterWizard(models.TransientModel):
         )
         res = r.json()
 
-        if res['error']:
-            raise AccessError(res['error'])
+        if res.get("error"):
+            raise AccessError(res.get("error"))
 
         self.env.ref('bev_2ba_connector.ba_importer_authorization_code').value = res['access_token']
         self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value = res['refresh_token']
@@ -113,15 +113,15 @@ class BaImporterWizard(models.TransientModel):
         )
         res = r.json()
 
-        if res['error']:
-            if res['error'] == 'invalid_grant':
+        if res.get("error"):
+            if res.get("error") == 'invalid_grant':
                 return self.request_access()
 
-            raise AccessError(res['error'])
+            raise AccessError(res.get("error"))
 
-        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').value = res['access_token']
-        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value = res['refresh_token']
-        expire = datetime.timestamp(datetime.now() + timedelta(seconds=res['expires_in'] - 100))
+        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').value = res.get("access_token")
+        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value = res.get("refresh_token")
+        expire = datetime.timestamp(datetime.now() + timedelta(seconds=res.get("expires_in") - 100))
         self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
 
     def get_product_by_gtin(self, gtin):
