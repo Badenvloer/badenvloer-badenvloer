@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_ba_importer_wizard" model="ir.ui.view">
+        <field name="name">2ba importer</field>
+        <field name="model">ba.importer.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Parameters">
+                <h1>2ba Importer</h1>
+                    Enter the sku code to import the product from the 2ba platform.
+                    <group>
+                        <field name="skus" />
+                    </group>
+                    <footer>
+                        <button
+                            name="execute_import"
+                            string="Import"
+                            type="object"
+                            class="btn-primary"
+                        />
+                        <button string="Cancel" class="btn-default" special="cancel" />
+                    </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ba_importer_wizard" model="ir.actions.act_window">
+        <field name="name">2ba importer</field>
+        <field name="res_model">ba.importer.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_ba_importer_wizard" />
+    </record>
+
+    <menuitem
+        action="action_ba_importer_wizard"
+        id="menu_ba_importer_wizard"
+        parent="stock.menu_stock_inventory_control"
+        sequence="19"
+    />
+
+
+</odoo>
