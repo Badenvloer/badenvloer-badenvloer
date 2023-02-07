@@ -31,7 +31,7 @@ class BaImporterWizard(models.TransientModel):
 
             # loop over all GTIN's to find duplicate products.
             for sku in skus:
-                prod = self.env['product.template'].search([
+                prod = self.env['product.template'].sudo().search([
                     ("barcode", "=", sku)
                 ])
 
@@ -52,18 +52,19 @@ class BaImporterWizard(models.TransientModel):
                 thumbnail = self.get_product_thumbnail(product.get('ManufacturerGLN'), product.get('Productcode'))
 
                 _logger.info(product)
-
-                # add new product
-                self.env["product.template"].create({
+                template = {
                     "name": product.get("Brand", "Merkloos") + " " + product.get('Model') + " " + product.get(
                         'Version'),
                     "description": product.get("Description"),
                     "description_sale": product.get("LongDescription"),
                     "weight": product.get("WeightQuantity"),
                     "weight_uom_name": product.get("WeightMeasureUnitDescription"),
-                    "barcode": product.get("GTIN"),
-                    "image_1920": thumbnail
-                })
+                    "barcode": product.get("GTIN")
+                }
+                if thumbnail:
+                    template['image_1920'] = thumbnail
+                # add new product
+                self.env["product.template"].sudo().create(template)
 
     @staticmethod
     def test_api(endpoint):
@@ -153,6 +154,6 @@ class BaImporterWizard(models.TransientModel):
                              "Authorization": "Bearer " + self.env.ref(
                                  'bev_2ba_connector.ba_importer_authorization_code').value
                          })
-
+        if not r.content:
+            return False
         return b64encode(r.content).decode("utf-8")
-
