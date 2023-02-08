@@ -95,9 +95,17 @@ class BaImporterWizard(models.TransientModel):
                             'value_ids': [(6, 0, [value.id])]
                         })
                     )
+                name = ""
+                if product.get("Brand", "Merkloos"):
+                    name += product.get("Brand", "Merkloos")
+                else:
+                    name += "Merkloos"
+                if product.get('Model' ,""):
+                    name += " " + product.get('Model' ,"")
+                if product.get('Version', ""):
+                    name += " " + product.get('Version', "")
                 template = {
-                    "name": product.get("Brand", "Merkloos") + " " + product.get('Model' ,"") + " " + product.get(
-                        'Version', ""),
+                    "name": name,
                     "description": product.get("Description"),
                     "description_sale": product.get("LongDescription"),
                     "weight": product.get("WeightQuantity"),
