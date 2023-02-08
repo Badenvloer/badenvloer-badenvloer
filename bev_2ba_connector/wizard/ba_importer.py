@@ -56,15 +56,15 @@ class BaImporterWizard(models.TransientModel):
                 attr_list = []
                 # loop features
                 for attr in attributes.get("Features"):
-                    res = self.env['product.attribute'].search([
+                    res = self.env['product.attribute'].sudo().search([
                         ("ba_ref", "=", attr.get("FeatureID"))
                     ], limit=1)
                     if not res:
-                        res = self.env['product.attribute'].search([
+                        res = self.env['product.attribute'].sudo().search([
                             ("name", "=", attr.get("Description"))
                         ], limit=1)
                         if not res:
-                            res = self.env["product.attribute"].create({
+                            res = self.env["product.attribute"].sudo().create({
                                 "name": attr.get("Description"),
                                 "ba_ref": attr.get("FeatureID")
                             })
@@ -80,12 +80,12 @@ class BaImporterWizard(models.TransientModel):
                     if attr.get("ValueDescription") != None:
                         val = str(attr.get("ValueDescription"))
 
-                    value = self.env['product.attribute.value'].search([
+                    value = self.env['product.attribute.value'].sudo().search([
                         ("attribute_id", "=", res.id),
                         ("name", "=", val)
                     ])
                     if not value:
-                        value = self.env["product.attribute.value"].create({
+                        value = self.env["product.attribute.value"].sudo().create({
                             "attribute_id": res.id,
                             "name": val,
                         })
