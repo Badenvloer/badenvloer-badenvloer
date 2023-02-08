@@ -208,7 +208,7 @@ class BaImporterWizard(models.TransientModel):
                              "Authorization": "Bearer " + self.env.ref(
                                  'bev_2ba_connector.ba_importer_authorization_code').value
                          })
-        if not r.content:
+        if r.status_code != 200:
             return False
         return b64encode(r.content).decode("utf-8")
 
