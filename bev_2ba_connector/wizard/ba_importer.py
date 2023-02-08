@@ -52,6 +52,47 @@ class BaImporterWizard(models.TransientModel):
                 thumbnail = self.get_product_thumbnail(product.get('ManufacturerGLN'), product.get('Productcode'))
 
                 _logger.info(product)
+                attributes = self._get_product_attributes(sku)
+                attr_list = []
+                # loop features
+                for attr in attributes.get("Features"):
+                    res = self.env['product.attribute'].search([
+                        ("ba_ref", "=", attr.get("FeatureID"))
+                    ], limit=1)
+                    if not res:
+                        res = self.env['product.attribute'].search([
+                            ("name", "=", attr.get("Description"))
+                        ], limit=1)
+                        if not res:
+                            res = self.env["product.attribute"].create({
+                                "name": attr.get("Description"),
+                                "ba_ref": attr.get("FeatureID")
+                            })
+
+                    # Create attribute res
+                    val = ""
+                    if attr.get("LogicalValue") != None:
+                        val = "Ja" if attr.get("LogicalValue") else "Nee"
+                    if attr.get("NumericValue") != None:
+                        val = str(attr.get("NumericValue"))
+                    if attr.get("RangeLowerValue") != None:
+                        val = str(attr.get("RangeLowerValue")) + " - " + str(attr.get("RangeUpperValue"))
+
+                    value = self.env['product.attribute.value'].search([
+                        ("attribute_id", "=", res.id),
+                        ("name", "=", val)
+                    ])
+                    if not value:
+                        value = self.env["product.attribute.value"].create({
+                            "attribute_id": res.id,
+                            "name": val,
+                        })
+                    attr_list.append(
+                        (0, 0, {
+                            'attribute_id': res.id,
+                            'value_ids': [(6, 0, [value.id])]
+                        })
+                    )
                 template = {
                     "name": product.get("Brand", "Merkloos") + " " + product.get('Model') + " " + product.get(
                         'Version'),
@@ -59,12 +100,15 @@ class BaImporterWizard(models.TransientModel):
                     "description_sale": product.get("LongDescription"),
                     "weight": product.get("WeightQuantity"),
                     "weight_uom_name": product.get("WeightMeasureUnitDescription"),
-                    "barcode": product.get("GTIN")
+                    "barcode": product.get("GTIN"),
+                    "detailed_type": "product",
+                    "ba_ref": product.get("id"),
+                    'attribute_line_ids': attr_list,
                 }
                 if thumbnail:
                     template['image_1920'] = thumbnail
                 # add new product
-                self.env["product.template"].sudo().create(template)
+                prod = self.env["product.template"].sudo().create(template)
 
     @staticmethod
     def test_api(endpoint):
@@ -157,3 +201,15 @@ class BaImporterWizard(models.TransientModel):
         if not r.content:
             return False
         return b64encode(r.content).decode("utf-8")
+
+    def _get_product_attributes(self, gtin):
+        r = requests.get(url=self.baseUrl + "/json/Product/DetailsByGtinA", params={
+            "gtin": gtin,
+            "includeFeatures": "true"
+        },
+                         headers={
+                             "Authorization": "Bearer " + self.env.ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                         })
+
+        return r.json()
