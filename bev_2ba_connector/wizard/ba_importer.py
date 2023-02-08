@@ -77,6 +77,8 @@ class BaImporterWizard(models.TransientModel):
                         val = str(attr.get("NumericValue"))
                     if attr.get("RangeLowerValue") != None:
                         val = str(attr.get("RangeLowerValue")) + " - " + str(attr.get("RangeUpperValue"))
+                    if attr.get("ValueDescription") != None:
+                        val = str(attr.get("ValueDescription"))
 
                     value = self.env['product.attribute.value'].search([
                         ("attribute_id", "=", res.id),
@@ -94,8 +96,8 @@ class BaImporterWizard(models.TransientModel):
                         })
                     )
                 template = {
-                    "name": product.get("Brand", "Merkloos") + " " + product.get('Model') + " " + product.get(
-                        'Version'),
+                    "name": product.get("Brand", "Merkloos") + " " + product.get('Model' ,"") + " " + product.get(
+                        'Version', ""),
                     "description": product.get("Description"),
                     "description_sale": product.get("LongDescription"),
                     "weight": product.get("WeightQuantity"),
