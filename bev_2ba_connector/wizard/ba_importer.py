@@ -96,12 +96,8 @@ class BaImporterWizard(models.TransientModel):
                         })
                     )
                 name = ""
-                if product.get("Brand", "Merkloos"):
-                    name += product.get("Brand", "Merkloos")
-                else:
-                    name += "Merkloos"
                 if product.get('Model' ,""):
-                    name += " " + product.get('Model' ,"")
+                    name += product.get('Model' ,"")
                 if product.get('Version', ""):
                     name += " " + product.get('Version', "")
                 template = {
@@ -114,6 +110,7 @@ class BaImporterWizard(models.TransientModel):
                     "detailed_type": "product",
                     "ba_ref": product.get("id"),
                     'attribute_line_ids': attr_list,
+                    "default_code": product.get("Productcode")
                 }
                 if thumbnail:
                     template['image_1920'] = thumbnail
