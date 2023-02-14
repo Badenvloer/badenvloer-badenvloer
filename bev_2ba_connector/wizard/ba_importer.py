@@ -95,13 +95,13 @@ class BaImporterWizard(models.TransientModel):
                             'value_ids': [(6, 0, [value.id])]
                         })
                     )
-                name = ""
+                name = product.get("Description")
                 if product.get('Model' ,""):
-                    name += product.get('Model' ,"")
+                    name += " " + product.get('Model' ,"")
                 if product.get('Version', ""):
                     name += " " + product.get('Version', "")
                 template = {
-                    "name": name,
+                    "name": product.get("Description"),
                     "description": product.get("Description"),
                     "description_sale": product.get("LongDescription"),
                     "weight": product.get("WeightQuantity"),
