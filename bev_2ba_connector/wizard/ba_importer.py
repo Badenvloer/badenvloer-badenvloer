@@ -41,7 +41,7 @@ class BaImporterWizard(models.TransientModel):
             # Execute call
             for sku in skus:
                 if datetime.now() > datetime.fromtimestamp(
-                        float(self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value)):
+                        float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
                     self.refresh_access()
 
                 product = self.get_product_by_gtin(sku)
@@ -136,10 +136,10 @@ class BaImporterWizard(models.TransientModel):
             url=self.authUrl,
             data={
                 "grant_type": "password",
-                "username": self.env.sudo().ref('bev_2ba_connector.ba_importer_username').value,
-                "password": self.env.sudo().ref('bev_2ba_connector.ba_importer_password').value,
-                "client_id": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_id').value,
-                "client_secret": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_secret').value,
+                "username": self.env.ref('bev_2ba_connector.ba_importer_username').sudo().value,
+                "password": self.env.ref('bev_2ba_connector.ba_importer_password').sudo().value,
+                "client_id": self.env.ref('bev_2ba_connector.ba_importer_client_id').sudo().value,
+                "client_secret": self.env.ref('bev_2ba_connector.ba_importer_client_secret').sudo().value,
             }
         )
         res = r.json()
@@ -147,10 +147,10 @@ class BaImporterWizard(models.TransientModel):
         if res.get("error"):
             raise AccessError(res.get("error"))
 
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_code').value = res['access_token']
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value = res['refresh_token']
+        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').sudo().value = res['access_token']
+        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').sudo().value = res['refresh_token']
         expire = datetime.timestamp(datetime.now() + timedelta(seconds=res['expires_in'] - 100))
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
+        self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value = expire
 
     def refresh_access(self):
         """
@@ -161,9 +161,9 @@ class BaImporterWizard(models.TransientModel):
             url=self.authUrl,
             data={
                 "grant_type": "refresh_token",
-                "refresh_token": self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value,
-                "client_id": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_id').value,
-                "client_secret": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_secret').value,
+                "refresh_token": self.env.ref('bev_2ba_connector.ba_importer_refresh_token').sudo().value,
+                "client_id": self.env.ref('bev_2ba_connector.ba_importer_client_id').sudo().value,
+                "client_secret": self.env.ref('bev_2ba_connector.ba_importer_client_secret').sudo().value,
             }
         )
         res = r.json()
@@ -174,10 +174,10 @@ class BaImporterWizard(models.TransientModel):
 
             raise AccessError(res.get("error"))
 
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_code').value = res.get("access_token")
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value = res.get("refresh_token")
+        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').sudo().value = res.get("access_token")
+        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').sudo().value = res.get("refresh_token")
         expire = datetime.timestamp(datetime.now() + timedelta(seconds=res.get("expires_in") - 100))
-        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
+        self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value = expire
 
     def get_product_by_gtin(self, gtin):
         """
@@ -187,8 +187,8 @@ class BaImporterWizard(models.TransientModel):
             "gtin": gtin
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.sudo().ref(
-                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                             "Authorization": "Bearer " + self.env.ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').sudo().value
                          })
 
         return r.json()
@@ -204,8 +204,8 @@ class BaImporterWizard(models.TransientModel):
             "productcode": productcode
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.sudo().ref(
-                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                             "Authorization": "Bearer " + self.env.ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').sudo().value
                          })
         if r.status_code != 200:
             return False
@@ -221,8 +221,8 @@ class BaImporterWizard(models.TransientModel):
             "gln": gln,
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.sudo().ref(
-                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                             "Authorization": "Bearer " + self.env.ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').sudo().value
                          })
 
         result = r.json()
@@ -242,8 +242,8 @@ class BaImporterWizard(models.TransientModel):
             "includeFeatures": "true"
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.sudo().ref(
-                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                             "Authorization": "Bearer " + self.env.ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').sudo().value
                          })
 
         return r.json()
