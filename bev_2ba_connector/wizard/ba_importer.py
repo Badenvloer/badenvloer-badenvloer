@@ -27,7 +27,7 @@ class BaImporterWizard(models.TransientModel):
         """
 
         for wizard in self:
-            skus = wizard.skus.split("/n")
+            skus = wizard.skus.splitlines()
 
             # loop over all GTIN's to find duplicate products.
             for sku in skus:
@@ -41,7 +41,7 @@ class BaImporterWizard(models.TransientModel):
             # Execute call
             for sku in skus:
                 if datetime.now() > datetime.fromtimestamp(
-                        float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').value)):
+                        float(self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value)):
                     self.refresh_access()
 
                 product = self.get_product_by_gtin(sku)
@@ -100,6 +100,7 @@ class BaImporterWizard(models.TransientModel):
                     name += " " + product.get('Model' ,"")
                 if product.get('Version', ""):
                     name += " " + product.get('Version', "")
+                supplier_price = self.get_supplier_price(product.get('ManufacturerGLN'), "Korver")
                 template = {
                     "name": product.get("Description"),
                     "description": product.get("Description"),
@@ -110,7 +111,8 @@ class BaImporterWizard(models.TransientModel):
                     "detailed_type": "product",
                     "ba_ref": product.get("id"),
                     'attribute_line_ids': attr_list,
-                    "default_code": product.get("Productcode")
+                    "default_code": product.get("Productcode"),
+                    "standard_price": supplier_price if supplier_price else 0
                 }
                 if thumbnail:
                     template['image_1920'] = thumbnail
@@ -134,10 +136,10 @@ class BaImporterWizard(models.TransientModel):
             url=self.authUrl,
             data={
                 "grant_type": "password",
-                "username": self.env.ref('bev_2ba_connector.ba_importer_username').value,
-                "password": self.env.ref('bev_2ba_connector.ba_importer_password').value,
-                "client_id": self.env.ref('bev_2ba_connector.ba_importer_client_id').value,
-                "client_secret": self.env.ref('bev_2ba_connector.ba_importer_client_secret').value,
+                "username": self.env.sudo().ref('bev_2ba_connector.ba_importer_username').value,
+                "password": self.env.sudo().ref('bev_2ba_connector.ba_importer_password').value,
+                "client_id": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_id').value,
+                "client_secret": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_secret').value,
             }
         )
         res = r.json()
@@ -145,10 +147,10 @@ class BaImporterWizard(models.TransientModel):
         if res.get("error"):
             raise AccessError(res.get("error"))
 
-        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').value = res['access_token']
-        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value = res['refresh_token']
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_code').value = res['access_token']
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value = res['refresh_token']
         expire = datetime.timestamp(datetime.now() + timedelta(seconds=res['expires_in'] - 100))
-        self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
 
     def refresh_access(self):
         """
@@ -159,9 +161,9 @@ class BaImporterWizard(models.TransientModel):
             url=self.authUrl,
             data={
                 "grant_type": "refresh_token",
-                "refresh_token": self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value,
-                "client_id": self.env.ref('bev_2ba_connector.ba_importer_client_id').value,
-                "client_secret": self.env.ref('bev_2ba_connector.ba_importer_client_secret').value,
+                "refresh_token": self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value,
+                "client_id": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_id').value,
+                "client_secret": self.env.sudo().ref('bev_2ba_connector.ba_importer_client_secret').value,
             }
         )
         res = r.json()
@@ -172,10 +174,10 @@ class BaImporterWizard(models.TransientModel):
 
             raise AccessError(res.get("error"))
 
-        self.env.ref('bev_2ba_connector.ba_importer_authorization_code').value = res.get("access_token")
-        self.env.ref('bev_2ba_connector.ba_importer_refresh_token').value = res.get("refresh_token")
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_code').value = res.get("access_token")
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_refresh_token').value = res.get("refresh_token")
         expire = datetime.timestamp(datetime.now() + timedelta(seconds=res.get("expires_in") - 100))
-        self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
+        self.env.sudo().ref('bev_2ba_connector.ba_importer_authorization_expire').value = expire
 
     def get_product_by_gtin(self, gtin):
         """
@@ -185,7 +187,7 @@ class BaImporterWizard(models.TransientModel):
             "gtin": gtin
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.ref(
+                             "Authorization": "Bearer " + self.env.sudo().ref(
                                  'bev_2ba_connector.ba_importer_authorization_code').value
                          })
 
@@ -202,12 +204,37 @@ class BaImporterWizard(models.TransientModel):
             "productcode": productcode
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.ref(
+                             "Authorization": "Bearer " + self.env.sudo().ref(
                                  'bev_2ba_connector.ba_importer_authorization_code').value
                          })
         if r.status_code != 200:
             return False
         return b64encode(r.content).decode("utf-8")
+
+    def get_supplier_price(self, gln, supplier):
+        """
+        Retrives the product thumbnail from 2ba api and returns a base64 encoded image
+
+        """
+
+        r = requests.get(url=self.baseUrl + "/json/TradeItem/ForGLN", params={
+            "gln": gln,
+        },
+                         headers={
+                             "Authorization": "Bearer " + self.env.sudo().ref(
+                                 'bev_2ba_connector.ba_importer_authorization_code').value
+                         })
+
+        result = r.json()
+        supplier_price = False
+        for item in result.get("TradeItems"):
+            if item.get("SupplierName") == "Korver Holland":
+                supplier_price = item.get("GrossPriceInPriceUnit")
+
+        if supplier_price:
+            return supplier_price
+        return False
+
 
     def _get_product_attributes(self, gtin):
         r = requests.get(url=self.baseUrl + "/json/Product/DetailsByGtinA", params={
@@ -215,7 +242,7 @@ class BaImporterWizard(models.TransientModel):
             "includeFeatures": "true"
         },
                          headers={
-                             "Authorization": "Bearer " + self.env.ref(
+                             "Authorization": "Bearer " + self.env.sudo().ref(
                                  'bev_2ba_connector.ba_importer_authorization_code').value
                          })
 
