@@ -1,0 +1,4 @@
+[submodule "Badenvloer/external"]
+	path = Badenvloer/external
+	url = git@github.com:Badenvloer/external.git
+	branch = main
