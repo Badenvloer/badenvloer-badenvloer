@@ -34,6 +34,8 @@ class BaImporterWizard(models.TransientModel):
 
             # loop over all GTIN's to find duplicate products.
             for sku in skus:
+                if len(str(sku)) == 13:
+                    sku = "0" + str(sku)
                 prod = self.env['product.template'].sudo().search([
                     ("barcode", "=", sku)
                 ])
