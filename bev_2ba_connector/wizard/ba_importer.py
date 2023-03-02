@@ -45,6 +45,8 @@ class BaImporterWizard(models.TransientModel):
 
             # Execute call
             for sku in skus:
+                if len(str(sku)) == 13:
+                    sku = "0" + str(sku)
                 if datetime.now() > datetime.fromtimestamp(
                         float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
                     self.refresh_access()
@@ -56,7 +58,6 @@ class BaImporterWizard(models.TransientModel):
 
                 thumbnail = self.get_product_thumbnail(product.get('ManufacturerGLN'), product.get('Productcode'))
 
-                _logger.info(product)
                 attributes = self._get_product_attributes(sku)
                 attr_list = []
                 # loop features
@@ -232,22 +233,15 @@ class BaImporterWizard(models.TransientModel):
             raise UserError("Partner has no pricelist")
         if not self.pricelist_partner_id.column_gln:
             raise UserError("Partner has no Column for GLN")
-        _logger.info("Get prices")
         csv_data = b64decode(self.pricelist_partner_id.pricelist_csv)
         data_file = io.StringIO(csv_data.decode("utf-8"))
         data_file.seek(0)
         csv_reader = csv.reader(data_file, delimiter=',')
         for row in csv_reader:
-            _logger.info(row)
-            _logger.info(self.pricelist_partner_id.column_gln)
-            _logger.info(str(row[self.pricelist_partner_id.column_gln]))
             column_gln = str(row[self.pricelist_partner_id.column_gln])
             if len(column_gln) == 13:
                 column_gln = "0" + column_gln
-                _logger.info("Refactor")
-                _logger.info(column_gln)
             if str(gln) == column_gln:
-                _logger.info("Match on price!")
                 obj = {}
                 if self.pricelist_partner_id.column_sale_price:
                     obj['sale_price'] = row[self.pricelist_partner_id.column_sale_price]
