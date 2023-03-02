@@ -42,10 +42,14 @@ class BaImporterWizard(models.TransientModel):
                 if prod:
                     if self.pricelist_partner_id:
                         pricing = self.get_prices(sku)
-                        prod.write({
-                            "list_price": pricing.get("sale_price", 0),
-                            "standard_price": pricing.get("purchase_price", 0),
-                        })
+                        if pricing.get("sale_price"):
+                            prod.write({
+                                "list_price": pricing.get("sale_price", 0),
+                            })
+                        if pricing.get("purchase_price"):
+                            prod.write({
+                                "standard_price": pricing.get("purchase_price", 0),
+                            })
                     continue
                 if datetime.now() > datetime.fromtimestamp(
                         float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
