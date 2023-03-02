@@ -242,8 +242,8 @@ class BaImporterWizard(models.TransientModel):
             _logger.info(self.pricelist_partner_id.column_gln)
             _logger.info(str(row[self.pricelist_partner_id.column_gln]))
             column_gln = str(row[self.pricelist_partner_id.column_gln])
-            if len(column_gln) == 14:
-                column_gln = column_gln[1:]
+            if len(column_gln) == 13:
+                column_gln = "0" + column_gln
                 _logger.info("Refactor")
                 _logger.info(column_gln)
             if str(gln) == column_gln:
