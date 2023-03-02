@@ -16,6 +16,7 @@
     "data": [
         'data/ir_config_parameter.xml',
         'security/ir.model.access.csv',
+        'views/res_partner_view.xml',
         'wizard/ba_importer.xml',
     ],
     "demo": [],

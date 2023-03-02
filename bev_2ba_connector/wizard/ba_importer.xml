@@ -9,6 +9,7 @@
                     Enter the sku code to import the product from the 2ba platform.
                     <group>
                         <field name="skus" />
+                        <field name="pricelist_partner_id" />
                     </group>
                     <footer>
                         <button
