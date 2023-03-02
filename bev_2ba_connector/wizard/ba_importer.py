@@ -2,8 +2,10 @@ from odoo import models, fields
 from odoo.exceptions import AccessError, UserError
 import logging
 import requests
-from datetime import datetime, timedelta
-from base64 import b64encode
+from datetime import datetime, timedelta, date
+from base64 import b64encode, b64decode
+import csv
+import io
 
 _logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class BaImporterWizard(models.TransientModel):
     baseUrl = "https://api.2ba.nl/1"
     authUrl = "https://authorize.2ba.nl/OAuth/Token"
     skus = fields.Text()
+    pricelist_partner_id = fields.Many2one("res.partner", domain="[('pricelist_csv', '!=', False)]")
 
     def execute_import(self):
         """
@@ -100,7 +103,11 @@ class BaImporterWizard(models.TransientModel):
                     name += " " + product.get('Model' ,"")
                 if product.get('Version', ""):
                     name += " " + product.get('Version', "")
-                supplier_price = self.get_supplier_price(product.get('ManufacturerGLN'), "Korver")
+
+                pricing = {}
+                if self.pricelist_partner_id:
+                    pricing = self.get_prices(product.get("GTIN"))
+
                 template = {
                     "name": product.get("Description"),
                     "description": product.get("Description"),
@@ -112,7 +119,8 @@ class BaImporterWizard(models.TransientModel):
                     "ba_ref": product.get("id"),
                     'attribute_line_ids': attr_list,
                     "default_code": product.get("Productcode"),
-                    "standard_price": supplier_price if supplier_price else 0
+                    "list_price": pricing.get("sale_price", 0),
+                    "standard_price": pricing.get("purchase_price", 0),
                 }
                 if thumbnail:
                     template['image_1920'] = thumbnail
@@ -211,30 +219,32 @@ class BaImporterWizard(models.TransientModel):
             return False
         return b64encode(r.content).decode("utf-8")
 
-    def get_supplier_price(self, gln, supplier):
+    def get_prices(self, gln):
         """
         Retrives the product thumbnail from 2ba api and returns a base64 encoded image
 
         """
 
-        r = requests.get(url=self.baseUrl + "/json/TradeItem/ForGLN", params={
-            "gln": gln,
-        },
-                         headers={
-                             "Authorization": "Bearer " + self.env.ref(
-                                 'bev_2ba_connector.ba_importer_authorization_code').sudo().value
-                         })
+        # Get supplier
+        if not self.pricelist_partner_id.pricelist_csv:
+            raise UserError("Partner has no pricelist")
+        if not self.pricelist_partner_id.column_gln:
+            raise UserError("Partner has no Column for GLN")
 
-        result = r.json()
-        supplier_price = False
-        for item in result.get("TradeItems"):
-            if item.get("SupplierName") == "Korver Holland":
-                supplier_price = item.get("GrossPriceInPriceUnit")
-
-        if supplier_price:
-            return supplier_price
-        return False
-
+        csv_data = b64decode('your binary field')
+        data_file = io.StringIO(csv_data.decode("utf-8"))
+        data_file.seek(0)
+        csv_reader = csv.reader(data_file, delimiter=',')
+        for row in csv_reader:
+            if gln == row[self.pricelist_partner_id.column_gln]:
+                _logger.info("Match on price!")
+                obj = {}
+                if self.pricelist_partner_id.column_sale_price:
+                    obj['sale_price'] = row[self.pricelist_partner_id.column_sale_price]
+                if self.pricelist_partner_id.column_purchase_price:
+                    obj['purchase_price'] = row[self.pricelist_partner_id.column_purchase_price]
+                return obj
+        return {}
 
     def _get_product_attributes(self, gtin):
         r = requests.get(url=self.baseUrl + "/json/Product/DetailsByGtinA", params={
