@@ -32,21 +32,21 @@ class BaImporterWizard(models.TransientModel):
         for wizard in self:
             skus = wizard.skus.splitlines()
 
-            # loop over all GTIN's to find duplicate products.
+            # Execute call
             for sku in skus:
                 if len(str(sku)) == 13:
                     sku = "0" + str(sku)
                 prod = self.env['product.template'].sudo().search([
                     ("barcode", "=", sku)
                 ])
-
                 if prod:
-                    raise UserError('Product with GTIN ' + sku + ' already exists')
-
-            # Execute call
-            for sku in skus:
-                if len(str(sku)) == 13:
-                    sku = "0" + str(sku)
+                    if self.pricelist_partner_id:
+                        pricing = self.get_prices(product.get("GTIN"))
+                        prod.write({
+                            "list_price": pricing.get("sale_price", 0),
+                            "standard_price": pricing.get("purchase_price", 0),
+                        })
+                    continue
                 if datetime.now() > datetime.fromtimestamp(
                         float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
                     self.refresh_access()
@@ -128,7 +128,7 @@ class BaImporterWizard(models.TransientModel):
                 if thumbnail:
                     template['image_1920'] = thumbnail
                 # add new product
-                prod = self.env["product.template"].sudo().create(template)
+                self.env["product.template"].sudo().create(template)
 
     @staticmethod
     def test_api(endpoint):
@@ -244,9 +244,9 @@ class BaImporterWizard(models.TransientModel):
             if str(gln) == column_gln:
                 obj = {}
                 if self.pricelist_partner_id.column_sale_price:
-                    obj['sale_price'] = row[self.pricelist_partner_id.column_sale_price]
+                    obj['sale_price'] = row[self.pricelist_partner_id.column_sale_price - 1]
                 if self.pricelist_partner_id.column_purchase_price:
-                    obj['purchase_price'] = row[self.pricelist_partner_id.column_purchase_price]
+                    obj['purchase_price'] = row[self.pricelist_partner_id.column_purchase_price - 1]
                 return obj
         return {}
 
