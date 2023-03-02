@@ -231,12 +231,15 @@ class BaImporterWizard(models.TransientModel):
         if not self.pricelist_partner_id.column_gln:
             raise UserError("Partner has no Column for GLN")
 
-        csv_data = b64decode('your binary field')
+        csv_data = b64decode(self.pricelist_partner_id.pricelist_csv)
         data_file = io.StringIO(csv_data.decode("utf-8"))
         data_file.seek(0)
         csv_reader = csv.reader(data_file, delimiter=',')
         for row in csv_reader:
-            if gln == row[self.pricelist_partner_id.column_gln]:
+            column_gln = str(row[self.pricelist_partner_id.column_gln])
+            if len(column_gln) == 14:
+                column_gln = column_gln[1:]
+            if str(gln) == column_gln:
                 _logger.info("Match on price!")
                 obj = {}
                 if self.pricelist_partner_id.column_sale_price:
