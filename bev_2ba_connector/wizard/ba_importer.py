@@ -41,7 +41,7 @@ class BaImporterWizard(models.TransientModel):
                 ])
                 if prod:
                     if self.pricelist_partner_id:
-                        pricing = self.get_prices(product.get("GTIN"))
+                        pricing = self.get_prices(sku)
                         prod.write({
                             "list_price": pricing.get("sale_price", 0),
                             "standard_price": pricing.get("purchase_price", 0),
