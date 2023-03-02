@@ -1,5 +1,5 @@
 <odoo>
-  <data noupdate="0">
+  <data noupdate="1">
     <record id="ba_importer_authorization_code" model="ir.config_parameter">
       <field name="key">ba_authorization_code</field>
       <field name="value">gAAAGw231OZXwzMiH_wV</field>
