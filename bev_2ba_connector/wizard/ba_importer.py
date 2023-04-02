@@ -28,12 +28,14 @@ class BaImporterWizard(models.TransientModel):
         First we check if the product doesn't exist already. if so we give an error.
         When no duplicate products are found we start importing the products
         """
-
         for wizard in self:
             skus = wizard.skus.splitlines()
 
             # Execute call
             for sku in skus:
+                if datetime.now() >= datetime.fromtimestamp(
+                        float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
+                    self.refresh_access()
                 if len(str(sku)) == 13:
                     sku = "0" + str(sku)
                 prod = self.env['product.template'].sudo().search([
@@ -69,9 +71,6 @@ class BaImporterWizard(models.TransientModel):
                                 "standard_price": pricing.get("purchase_price", 0),
                             })
                     continue
-                if datetime.now() > datetime.fromtimestamp(
-                        float(self.env.ref('bev_2ba_connector.ba_importer_authorization_expire').sudo().value)):
-                    self.refresh_access()
 
                 product = self.get_product_by_gtin(sku)
                 if 'IsError' in product.keys():
