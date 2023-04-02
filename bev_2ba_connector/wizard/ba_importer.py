@@ -50,7 +50,7 @@ class BaImporterWizard(models.TransientModel):
                             "weight_uom_name": product.get("WeightMeasureUnitDescription"),
                             "barcode": product.get("GTIN"),
                             "detailed_type": "product",
-                            "ba_ref": product.get("id"),
+                            "ba_ref": product.get("Id"),
                             "default_code": product.get("Productcode"),
                         }
                         prod.write(template)
@@ -139,7 +139,7 @@ class BaImporterWizard(models.TransientModel):
                     "weight_uom_name": product.get("WeightMeasureUnitDescription"),
                     "barcode": product.get("GTIN"),
                     "detailed_type": "product",
-                    "ba_ref": product.get("id"),
+                    "ba_ref": product.get("Id"),
                     'attribute_line_ids': attr_list,
                     "default_code": product.get("Productcode"),
                     "list_price": pricing.get("sale_price", 0),
