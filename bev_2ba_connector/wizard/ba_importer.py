@@ -40,6 +40,20 @@ class BaImporterWizard(models.TransientModel):
                     ("barcode", "=", sku)
                 ])
                 if prod:
+                    if self._context.get("update_content"):
+                        product = self.get_product_by_gtin(sku)
+                        template = {
+                            "name": product.get("Description"),
+                            "description": product.get("Description"),
+                            "description_sale": product.get("LongDescription"),
+                            "weight": product.get("WeightQuantity"),
+                            "weight_uom_name": product.get("WeightMeasureUnitDescription"),
+                            "barcode": product.get("GTIN"),
+                            "detailed_type": "product",
+                            "ba_ref": product.get("id"),
+                            "default_code": product.get("Productcode"),
+                        }
+                        prod.write(template)
                     if self.pricelist_partner_id:
                         pricing = self.get_prices(sku)
                         _logger.info(pricing)
@@ -77,7 +91,8 @@ class BaImporterWizard(models.TransientModel):
                         if not res:
                             res = self.env["product.attribute"].sudo().create({
                                 "name": attr.get("Description"),
-                                "ba_ref": attr.get("FeatureID")
+                                "ba_ref": attr.get("FeatureID"),
+                                "create_variant": "no_variant"
                             })
 
                     # Create attribute res
