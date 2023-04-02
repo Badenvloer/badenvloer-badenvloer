@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_product_form" model="ir.ui.view">
+        <field name="inherit_id" ref="product.product_template_only_form_view" />
+        <field name="model">product.template</field>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <field name="ba_ref" invisible="1" />
+                 <button string="Update productdata" type="object" name="update_product_2ba" attrs="{'invisible': [('ba_ref', '=', False)]}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
