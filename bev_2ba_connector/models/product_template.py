@@ -14,7 +14,7 @@ class ProductTemplate(models.Model):
             "target": "new",
             "view_mode": "form",
             "context": {
-                "skus": self.barcode,
+                "default_skus": self.barcode,
                 "update_content": True
             },
         }

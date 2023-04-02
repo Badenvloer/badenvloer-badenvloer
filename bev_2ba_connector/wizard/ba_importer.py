@@ -42,6 +42,9 @@ class BaImporterWizard(models.TransientModel):
                 if prod:
                     if self._context.get("update_content"):
                         product = self.get_product_by_gtin(sku)
+                        if 'IsError' in product.keys():
+                            raise UserError("[%s]: %s" % (sku, product.get("ErrorMessage")))
+                            continue
                         template = {
                             "name": product.get("Description"),
                             "description": product.get("Description"),
